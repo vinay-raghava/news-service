@@ -1,6 +1,6 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from settings import Configurations
+from news_app.settings import Configurations
 
 config = Configurations()
 app = Flask(__name__)
