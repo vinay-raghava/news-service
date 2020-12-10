@@ -8,6 +8,5 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = config.SQLALCHEMY_DATABASE_URI
 
 db = SQLAlchemy(app)
-db.create_all()
 
 from news_app import routes
