@@ -3,6 +3,7 @@ import uuid
 import os
 from dateutil.parser import parse
 from flask import request, jsonify, url_for, send_file
+from flask_cors import cross_origin
 from news_app import app, db, config
 from news_app.models import SavedNews
 from news_app.utils.convert_to_json import convert_to_json
@@ -12,6 +13,7 @@ API_KEY = config.NEWS_API_KEY
 
 @app.route('/')
 @app.route('/get-latest-news', methods=['GET'])
+@cross_origin()
 def latest_news():
     """
     Gets the latest news
@@ -32,6 +34,7 @@ def latest_news():
 
 
 @app.route('/saved-news', methods=['GET', 'POST'])
+@cross_origin()
 def saved_news():
     """
     Gets the saved news, Saves the given news.
@@ -53,6 +56,7 @@ def saved_news():
         return convert_to_json.getNews(all_news)
 
 @app.route('/saved-news/<int:id>', methods=['DELETE'])
+@cross_origin()
 def delete_saved_news(id):
     """
     Deletes the news from saved list by using the given id
@@ -65,6 +69,7 @@ def delete_saved_news(id):
     return ({"error": 'Not found the saved news'}, http.client.NOT_FOUND)
 
 @app.route('/countries')
+@cross_origin()
 def get_countries():
     """
     Countries available to fetch news.
