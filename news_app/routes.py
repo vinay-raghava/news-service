@@ -55,7 +55,7 @@ def saved_news():
             news.saved = True
         return convert_to_json.getNews(all_news)
 
-@app.route('/saved-news/<int:id>', methods=['DELETE'])
+@app.route('/saved-news/<int(signed=True):id>', methods=['DELETE'])
 @cross_origin()
 def delete_saved_news(id):
     """
