@@ -8,5 +8,7 @@ def isUserAuthorized(auth_header):
     if not auth_token:
         return None
     user_id = User.decodeAuthToken(auth_token)
+    if not isinstance(user_id, int):
+        return None
     user = User.query.filter_by(id=user_id).first()
     return user
