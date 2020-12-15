@@ -10,20 +10,31 @@ class User(db.Model):
     username = db.Column(db.String(30), nullable=False, unique=True)
     email = db.Column(db.String(120), nullable=False, unique = True)
     password = db.Column(db.String(), nullable=False)
+    joinedDate = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     savedNews = db.relationship('SavedNews', backref='user', lazy=True)
 
     def __repr__(self):
         return f"User('{self.username}', '{self.email})"
+    @property
+    def serialize(self):
+        """
+        Returns the object data in serializable format
+        """
+        return {
+            'username': self.username,
+            'email': self.email,
+            'joinedDate': self.joinedDate
+        }
 
-    def generateAuthToken(self, user_id):
+    def generateAuthToken(self):
         """
         Generates an auth token for the given user id.
         """
         try:
             payload = {
-                'exp': datetime.utcnow() + timedelta(days=0, minutes=5),
+                'exp': datetime.utcnow() + timedelta(days=0, minutes=30),
                 'iat': datetime.utcnow(),
-                'sub': user_id
+                'sub': self.id
             }
             return jwt.encode(payload, config.SECRET_KEY, algorithm='HS256').decode()
         except Exception as error:
@@ -49,7 +60,7 @@ class SavedNews(db.Model):
     id = db.Column(db.BigInteger, primary_key=True)
     headline = db.Column(db.String(), nullable=False)
     url = db.Column(db.String(), nullable=False, unique=True)
-    image = db.Column(db.String(), nullable=False, default='default.jpg')
+    image = db.Column(db.String(), nullable=False, default='default-news-image.png')
     shortDescription = db.Column(db.String())
     date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     savedDate = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
@@ -57,3 +68,19 @@ class SavedNews(db.Model):
 
     def __repr__(self):
         return f"SavedNews('{self.id}', '{self.headline}, '{self.url})"
+
+    @property
+    def serialize(self):
+        """
+        Returns the Saved news object data in serializable format
+        """
+        return {
+            "id": self.id,
+            "headline": self.headline,
+            "url": self.url,
+            "image": self.image,
+            "shortDescription": self.shortDescription,
+            "saved": True,
+            "date": self.date,
+            "savedDate": self.savedDate
+        }
