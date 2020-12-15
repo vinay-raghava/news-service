@@ -6,7 +6,6 @@ from flask_cors import cross_origin
 from flask import request, jsonify, url_for, send_file
 from news_app import app, db, config, bcrypt
 from news_app.models import User, SavedNews
-from news_app.utils.convert_to_json import convert_to_json
 from news_app.utils.latest_news_getter import get_latest_news
 from news_app.utils.check_authorization import isUserAuthorized
 
@@ -22,7 +21,13 @@ def latest_news():
         if not user:
             return ({ 'error': 'Please login again' }, http.client.UNAUTHORIZED)
 
-        response = get_latest_news(apiKey=API_KEY, country='in')
+        country = 'in'
+        keyword = None
+        if request.args:
+            print(request.args)
+            country = request.args.get('country')
+            keyword = request.args.get('keyword')
+        response = get_latest_news(apiKey=API_KEY, country=country, keyword=keyword)
         return jsonify([
             {
                 "id": hash(news["url"]),
@@ -56,12 +61,9 @@ def saved_news():
                 db.session.add(news)
                 db.session.commit()
                 return { "saved": True }
-
         else:
             all_news = SavedNews.query.filter_by(user_id=user.id)
-            for news in all_news:
-                news.saved = True
-            return convert_to_json.getNews(all_news)
+            return jsonify([ news.serialize for news in all_news])
     except Exception as e:
         db.session.rollback()
         return ({'error': f'Error occurred: {e}'}, http.client.INTERNAL_SERVER_ERROR)
@@ -127,9 +129,20 @@ def login():
         user_credentials = request.get_json()
         user = User.query.filter_by(username=user_credentials['username']).first()
         if user and bcrypt.check_password_hash(user.password, user_credentials['password']):
-            auth_token = user.generateAuthToken(user.id)
+            auth_token = user.generateAuthToken()
             return jsonify(auth_token)
         else:
             return({'error': 'User credentials mismatch'}, http.client.UNAUTHORIZED)
     except Exception as e:
         return({ 'error': f'Error occurred: {e}'}, http.client.UNAUTHORIZED)
+
+@app.route('/user-details', methods=['GET'])
+def user_details():
+    """
+    Returns the details of the logged in user.
+    """
+    user = isUserAuthorized(request.headers.get('Authorization'))
+    if not user:
+        return ({ 'error': 'Please login again' }, http.client.UNAUTHORIZED)
+
+    return jsonify(user.serialize)
