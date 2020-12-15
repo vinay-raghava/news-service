@@ -2,7 +2,7 @@ from news_app.models import User
 
 def isUserAuthorized(auth_header):
     """
-    Checks the user authorization
+    Checks the user authorization, if user exists returns user
     """
     auth_token = auth_header
     if not auth_token:
