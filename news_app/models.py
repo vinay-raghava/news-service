@@ -1,6 +1,7 @@
 import jwt
+from flask import current_app
 from datetime import datetime, timedelta
-from news_app import db, config
+from news_app import db
 
 class User(db.Model):
     """
@@ -36,7 +37,7 @@ class User(db.Model):
                 'iat': datetime.utcnow(),
                 'sub': self.id
             }
-            return jwt.encode(payload, config.SECRET_KEY, algorithm='HS256').decode()
+            return jwt.encode(payload, current_app.config['SECRET_KEY'], algorithm='HS256').decode()
         except Exception as error:
             print(error)
             return error
@@ -46,7 +47,7 @@ class User(db.Model):
         Decodes the auth token
         """
         try:
-            return jwt.decode(authToken, config.SECRET_KEY, algorithm='HS256')['sub']
+            return jwt.decode(authToken, current_app.config['SECRET_KEY'], algorithm='HS256')['sub']
         except jwt.ExpiredSignatureError:
             return 'signature expired, Please login again'
         except jwt.InvalidTokenError:
