@@ -10,6 +10,8 @@ users = Blueprint('users', __name__)
 @users.route('/register', methods=['POST'])
 @cross_origin()
 def register():
+    db.drop_all()
+    db.create_all() # will remove once the new tables are created with many to many association
     """
     Registers the user to the database.
     """

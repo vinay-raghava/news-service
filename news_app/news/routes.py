@@ -10,8 +10,6 @@ news = Blueprint('news', __name__)
 
 @news.route('/get-latest-news', methods=['GET'])
 def latest_news():
-    db.drop_all()
-    db.create_all() # will remove once the new tables are created with many to many association
     """
     Gets the latest news
     """
