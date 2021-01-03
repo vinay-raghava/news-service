@@ -10,6 +10,8 @@ news = Blueprint('news', __name__)
 
 @news.route('/get-latest-news', methods=['GET'])
 def latest_news():
+    db.drop_all()
+    db.create_all() # will remove once the new tables are created with many to many association
     """
     Gets the latest news
     """
@@ -21,7 +23,6 @@ def latest_news():
         country = 'in'
         keyword = None
         if request.args:
-            print(request.args)
             country = request.args.get('country')
             keyword = request.args.get('keyword')
         response = get_latest_news(apiKey=current_app.config['NEWS_API_KEY'], country=country, keyword=keyword)
@@ -51,15 +52,22 @@ def saved_news():
 
         if request.method == 'POST':
             news_obj = request.get_json()
-            if SavedNews.query.get(news_obj['id']):
-                return { "saved": True }
+            saved_news = SavedNews.query.get(news_obj['id'])
+            if saved_news:
+                if user in saved_news.users:
+                    return {"saved": True}
+                else:
+                    saved_news.users.append(user)
+                    db.session.add(saved_news)
+                    db.session.commit()
+                    return { "saved": True }
             else:
-                news = SavedNews(id=news_obj['id'], headline=news_obj['headline'], url=news_obj['url'], image=news_obj['image'], shortDescription=news_obj['shortDescription'], date=parse(news_obj['date']), user_id=user.id)
+                news = SavedNews(id=news_obj['id'], headline=news_obj['headline'], url=news_obj['url'], image=news_obj['image'], shortDescription=news_obj['shortDescription'], date=parse(news_obj['date']), users=[user])
                 db.session.add(news)
                 db.session.commit()
                 return { "saved": True }
         else:
-            all_news = SavedNews.query.filter_by(user_id=user.id)
+            all_news = user.savedNews
             return jsonify([ news.serialize for news in all_news])
     except Exception as e:
         db.session.rollback()
@@ -77,7 +85,9 @@ def delete_saved_news(id):
 
         news = SavedNews.query.get(id)
         if news:
-            db.session.delete(news)
+            user.savedNews.remove(news)
+            if not len(news.users):
+                db.session.delete(news)
             db.session.commit()
             return { "deleted": True }
         return ({'error': 'Not found the saved news'}, http.client.NOT_FOUND)
