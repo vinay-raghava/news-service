@@ -3,6 +3,11 @@ from flask import current_app
 from datetime import datetime, timedelta
 from news_app import db
 
+association_table = db.Table('association', db.Model.metadata,
+    db.Column('user_id', db.Integer, db.ForeignKey('user.id'), nullable=False),
+    db.Column('saved_news_id', db.BigInteger, db.ForeignKey('saved_news.id'))
+)
+
 class User(db.Model):
     """
     Model of the User table.
@@ -12,7 +17,7 @@ class User(db.Model):
     email = db.Column(db.String(120), nullable=False, unique = True)
     password = db.Column(db.String(), nullable=False)
     joinedDate = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    savedNews = db.relationship('SavedNews', backref='user', lazy=True)
+    savedNews = db.relationship('SavedNews', secondary=association_table, backref='user', lazy=True)
 
     def __repr__(self):
         return f"User('{self.username}', '{self.email})"
@@ -65,7 +70,7 @@ class SavedNews(db.Model):
     shortDescription = db.Column(db.String())
     date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     savedDate = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    users = db.relationship('User', secondary=association_table, backref='savednews', lazy=True)
 
     def __repr__(self):
         return f"SavedNews('{self.id}', '{self.headline}, '{self.url})"
